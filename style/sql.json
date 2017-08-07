@@ -1,0 +1,37 @@
+{
+    "sql":[
+        {            
+            "color":"#1553da",
+            "bold":500,
+            "tag":[
+                {
+                    "name":"select"
+                },{
+                    "name":"where"
+                },{
+                    "name":"from"
+                },{
+                    "name":"having"
+                },{
+                    "name":"group by"
+                },{
+                    "name":"order by"
+                },{
+                    "name":"top"
+                }
+            ]
+        },{            
+            "color": "#ddd",
+            "bold":0,
+            "tag":[
+                {
+                    "name":"and"
+                },{
+                    "name":"or"
+                },{
+                    "name":"between"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Пример использования</title>
+    <!-- Подключаем модуль -->
+    <script src="colorCode.js"></script>
+    <script>
+        window.onload = function () {
+            var colorCode = ColorCode;  
+            console.log(colorCode.getVersion());
+            colorCode.addSyntax('style/sql.json');
+            colorCode.init("#text_sql", true);
+        }
+    </script>
+</head>
+<body>
+    <h1>Использование подстветки кода</h1>
+    <div>
+        <textarea name="text-sql" id="text_sql" cols="30" rows="10" data-colorCode="sql">
+select * from base.dbo.table where table.a = 10 and table.b='text'
+        </textarea>
+    </div>
+</body>
+</html>
