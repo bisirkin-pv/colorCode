@@ -1,10 +1,11 @@
 ;(function(){    
     "use strict";
     
-    let version = '0.0.1';
+    let version = '0.0.2'
+        ,lastUpdateDate = '10.08.2017';         
     var isDebug = true                          //флаг режима отладки
         ,syntax = {}                            //Хранит найденные языки
-        ,htmldata = 'data-colorCode'                 //атрибут для поиска
+        ,htmldata = 'data-colorCode'            //атрибут для поиска
     ;
     
     // вывод сообщений в режиме дебага
@@ -18,6 +19,11 @@
     function getVersion(){
         return version;
     }
+    // Object: ColorCode, вернуть последнюю дату изменения
+    function getLastUpdateDate(){
+        return lastUpdateDate;
+    }
+    
     
     //Загрузка файла в формате JSON
     function _loadJSON(file, callback) {   
@@ -34,14 +40,10 @@
     
     // Object: ColorCode, заполнение из JSON файла
     function _load(patch) {
-        var actual_JSON;
+        var actual_JSON = "";
         _loadJSON(patch||'', function(response) {
             try{
-                actual_JSON = JSON.parse(response);
-                if(actual_JSON){                    
-                    debuglog(actual_JSON);
-                    debuglog(Object.keys(actual_JSON));
-                }
+                actual_JSON = JSON.parse(response);                
             }catch(ex){
                 debuglog('ColorCode.load: Ошибка парсинга объекта');
             }
@@ -78,7 +80,6 @@
                
                 if(objectKey=="bold"){
                     bold = value;
-                    
                 }
                 if(objectKey=="color"){
                     color = value;
@@ -92,51 +93,68 @@
                 }
             });
         };
-        debuglog(syntax);
     }
     // Создает текстовый блок с текстом и подстветкой
-    /* return: txt - итоговый текст обернутый в div
-        txt - текст для поиска и замены
+    /* return: txt - итоговый текст обернутый
+        txt - текст для поиска и замены        
         , syntax - синтаксис текста
        
     */
     function _CodeBlock(txt, syntax){
-        debuglog(syntax);
         if(typeof syntax != "object") {return 0;}
-        debuglog("Работаем");
         for(var i = 0; i < syntax.codeBase.length; i++){
-            txt = txt.replace(new RegExp(syntax.codeBase[i].tag+'[ ]+','g'),"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>" + syntax.codeBase[i].tag + " </span>")
+            txt = txt + ' ';
+            txt = txt.replace(new RegExp(syntax.codeBase[i].tag+'[ \n]+','g'),"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>" + syntax.codeBase[i].tag + " </span>")
                 
             ;            
-        }        
-        return '<div class="colorCode">' + txt +'</div>';     
+        }
+        return txt.substring(0, txt.length - 1);
     }
     
     // Object: ColorCode, ищет все элементы на страницы и добавлет им подстветку
     /*
         selector  - css сеелктор к элементу с текстом
+        , selectorTarget - css сеелктор к элементу для вставки текста
         , isRemove - флаг удалять исходный элемент или нет
     */
-    function init(selector, isRemove){
-        var elem = document.querySelectorAll(selector)
+    function init(selectorSource, selectorTarget, isRemove){
+        var sourceElement = document.querySelector(selectorSource)
             ,txt = ""
+            ,elemText = ""
         ;
-        
-        elem.forEach(function(obj, index){            
-            txt = _CodeBlock(obj.value, syntax[obj.getAttribute(htmldata)]); 
-            if(txt==""){return 0;}
-            debuglog(txt);
-            obj.insertAdjacentHTML("afterEnd", txt);
-            if(isRemove){
-                obj.remove();
-            }
-        })
-        
+        if(sourceElement.value){
+            elemText = sourceElement.value;
+        }else if(sourceElement.innerHTML){
+            elemText = sourceElement.innerHTML;
+        }
+        txt = _CodeBlock(elemText, syntax[sourceElement.getAttribute(htmldata)]); 
+        if(txt==""){return 0;}
+        let targetElement = document.querySelector(selectorTarget);
+        if(targetElement==null){
+            sourceElement.insertAdjacentHTML("afterEnd", '<div class="colorCode" id="colorCode">' + txt +'</div>');
+        }else{            
+            targetElement.innerHTML = txt;   
+            targetElement.className = "colorCode";
+        }
+                
+        if(isRemove){
+            sourceElement.remove();
+        }
     }
+    // Object: ColorCode, Устанавливает слушателя для обновления при изменении
+    function addListener(sourceElementId, targetElementId){
+        let sourceElement = document.querySelector(sourceElementId);              
+                sourceElement.addEventListener("blur", function(){
+                    init(sourceElementId, targetElementId, false)
+                }, true);
+    }
+    
     //Функции доступные из вне
     ColorCode.getVersion = getVersion;
+    ColorCode.getLastUpdateDate = getLastUpdateDate;
     ColorCode.addSyntax = addSyntax;
     ColorCode.init = init;
+    ColorCode.addListener = addListener;
     
     // "экспортировать" ColorCode наружу из модуля
     window.ColorCode = ColorCode;
