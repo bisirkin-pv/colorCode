@@ -1,4 +1,4 @@
-# **colorCode** - Backlighting User Data
+# **colorCode** - highlighting User Data
 >Модуль находитсья в процессе разработки. Текщая версия 0.0.2.
 Описание пока не доступно.
 Пример: индекс.html
