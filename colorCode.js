@@ -1,35 +1,52 @@
 ;(function(){    
     "use strict";
     
-    let version = '0.0.2'
-        ,lastUpdateDate = '10.08.2017';         
-    var isDebug = true                          //флаг режима отладки
-        ,syntax = {}                            //Хранит найденные языки
-        ,htmldata = 'data-colorCode'            //атрибут для поиска
+    let version = '0.0.3'
+        ,lastUpdateDate = '12.08.2017';         
+    var isDebug = true                          //Flag debug mode
+        ,syntax = {}                            //Stores downloaded syntaxes
+        ,htmldata = 'data-colorCode'            //Attribute to find the syntax for highlighting
     ;
-    
-    // вывод сообщений в режиме дебага
+        
+    /*  
+        Displaying messages in debug mode
+        in: String msg - input object for output to the console
+    */
     function debuglog(msg){
         if(!!isDebug) {console.log(msg)};
     }
-    //конструктор
+    
+    /*
+        Object: ColorCode, constructor
+    */
     function ColorCode(){
     }
-    // Object: ColorCode, вернуть текущую версию
+        
+    /*  
+        Object: ColorCode, return current version
+        return: String - current version
+    */
     function getVersion(){
         return version;
     }
-    // Object: ColorCode, вернуть последнюю дату изменения
+        
+    /*
+        Object: ColorCode, Return last change date
+        return: String - current last change date
+    */
     function getLastUpdateDate(){
         return lastUpdateDate;
     }
-    
-    
-    //Загрузка файла в формате JSON
-    function _loadJSON(file, callback) {   
+            
+    /*
+        Object: ColorCode, private, Downloading the file in JSON format
+        In: String path - path to JSON file containing the syntax
+        In: Function callback - function performed when the file is received
+    */
+    function _loadJSON(path, callback) {   
         var xhr = new XMLHttpRequest();
         xhr.overrideMimeType("application/json");
-        xhr.open('GET', file, false);
+        xhr.open('GET', path, false);
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4 && xhr.status == "200") {
                 callback(xhr.responseText);
@@ -37,43 +54,58 @@
         };
         xhr.send(null);  
      }
-    
-    // Object: ColorCode, заполнение из JSON файла
-    function _load(patch) {
-        var actual_JSON = "";
-        _loadJSON(patch||'', function(response) {
+        
+    /*
+        Object: ColorCode, private, Filling out the JSON file
+        In: String path - path to JSON file containing the syntax
+        return: Object actual_JSON - Processed JSON object.
+    */
+    function _load(path) {
+        var actual_JSON = {};
+        _loadJSON(path||'', function(response) {
             try{
                 actual_JSON = JSON.parse(response);                
             }catch(ex){
-                debuglog('ColorCode.load: Ошибка парсинга объекта');
+                debuglog('ColorCode.load: Error parse JSON file.');
             }
         });
         return actual_JSON;
     };
-    
-
-    // Еденица разметки
-    function Code(tag, bold, color){
+        
+    /*  
+        Object: Code, private, the object stores data on the element for highlighting and parameters
+        In: String tag - Element for highlighting
+        In: Int bold - value property ccs "font-weight"
+        In: String color - value property ccs "color"
+    */
+    function _Code(tag, bold, color){
             this.tag = tag;
             this.bold = bold;
             this.color = color;
     }
-    // Объект хранит все стили для синтаксиса
-    function Syntax(name){
+        
+    /*
+        Object: _Syntax, private, the object stores the _code objects for a specific syntax
+        In: String name - Syntax name
+    */
+    function _Syntax(name){
         this.name = name;
         this.codeBase = [];
     }
-    Syntax.prototype.add = function(tag, bold, color){
-        this.codeBase.push(new Code(tag, bold, color));
+    _Syntax.prototype.add = function(tag, bold, color){
+        this.codeBase.push(new _Code(tag, bold, color));
     }
     
-    // Object: ColorCode, добавляет синтаксис
-    function addSyntax(patch){
-        var jsonObject = _load(patch);
+    /*
+        Object: ColorCode, Add syntax
+        In: String path - path to the JSON file
+    */
+    function addSyntax(path){
+        var jsonObject = _load(path);
         let jsonKey = Object.keys(jsonObject);
          var bold = ""
             ,color = "";
-        syntax[jsonKey] = new Syntax(jsonKey[0]);
+        syntax[jsonKey] = new _Syntax(jsonKey[0]);
         for(var i = 0; i < jsonObject[jsonKey].length; i++){
             Object.keys(jsonObject[jsonKey][i]).map(function(objectKey, index) {
                 var value = jsonObject[jsonKey][i][objectKey];
@@ -94,14 +126,16 @@
             });
         };
     }
-    // Создает текстовый блок с текстом и подстветкой
-    /* return: txt - итоговый текст обернутый
-        txt - текст для поиска и замены        
-        , syntax - синтаксис текста
-       
+        
+    /* 
+        Oblect: _CodeBlock, creates a text block with text and highlighting
+        in: txt - текст для поиска и замены        
+        in: syntax - синтаксис текста
+        return: txt - итоговый текст обернутый
     */
     function _CodeBlock(txt, syntax){
         if(typeof syntax != "object") {return 0;}
+        txt = _clearHtml(txt);
         for(var i = 0; i < syntax.codeBase.length; i++){
             txt = txt + ' ';
             txt = txt.replace(new RegExp(syntax.codeBase[i].tag+'[ \n]+','g'),"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>" + syntax.codeBase[i].tag + " </span>")
@@ -110,12 +144,23 @@
         }
         return txt.substring(0, txt.length - 1);
     }
-    
-    // Object: ColorCode, ищет все элементы на страницы и добавлет им подстветку
+        
+    /* 
+        Object: ColorCode, replace all <,> on html code
+        in: input string
+        return: clear string
+    */
+    function _clearHtml(txt){
+        txt = txt.replace(new RegExp('<','g'),'&#8249;');
+        txt = txt.replace(new RegExp('>','g'),'&#8250;');
+        return txt;
+    }
+        
     /*
-        selector  - css сеелктор к элементу с текстом
-        , selectorTarget - css сеелктор к элементу для вставки текста
-        , isRemove - флаг удалять исходный элемент или нет
+        Object: ColorCode, searches all items for pages and adds them backlight
+        In: String selectorSource - css selector to element with text
+        In: String selectorTarget - css selector to element to insert text
+        In: bool isRemove - flag to delete the source element or not
     */
     function init(selectorSource, selectorTarget, isRemove){
         var sourceElement = document.querySelector(selectorSource)
@@ -131,7 +176,7 @@
         if(txt==""){return 0;}
         let targetElement = document.querySelector(selectorTarget);
         if(targetElement==null){
-            sourceElement.insertAdjacentHTML("afterEnd", '<div class="colorCode" id="colorCode">' + txt +'</div>');
+            sourceElement.insertAdjacentHTML("afterEnd", '<pre class="colorCode" id="colorCode">' + txt +'</pre>');
         }else{            
             targetElement.innerHTML = txt;   
             targetElement.className = "colorCode";
@@ -141,7 +186,12 @@
             sourceElement.remove();
         }
     }
-    // Object: ColorCode, Устанавливает слушателя для обновления при изменении
+    
+    /*
+        Object: ColorCode, sets the listener for updates when the focus is lost
+        In: String selectorSource - css selector to element with text
+        In: String selectorTarget - css selector to element to insert text
+    */
     function addListener(sourceElementId, targetElementId){
         let sourceElement = document.querySelector(sourceElementId);              
                 sourceElement.addEventListener("blur", function(){
@@ -149,13 +199,17 @@
                 }, true);
     }
     
-    //Функции доступные из вне
+    /*
+        Functions available from outside
+    */
     ColorCode.getVersion = getVersion;
     ColorCode.getLastUpdateDate = getLastUpdateDate;
     ColorCode.addSyntax = addSyntax;
     ColorCode.init = init;
     ColorCode.addListener = addListener;
     
-    // "экспортировать" ColorCode наружу из модуля
+    /*
+        "Export" the ColorCode to the outside of the module
+    */
     window.ColorCode = ColorCode;
 }());

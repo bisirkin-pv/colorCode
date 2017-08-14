@@ -1,4 +1,6 @@
 # **colorCode** - highlighting User Data
->Модуль находитсья в процессе разработки. Текщая версия 0.0.2.
-Описание пока не доступно.
-Пример: индекс.html
+>The module is under construction. Current version is 0.0.3.
+The description is not yet available.
+Example: index.html
+
+## getting started
