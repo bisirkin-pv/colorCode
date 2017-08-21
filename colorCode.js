@@ -1,8 +1,8 @@
 ;(function (){    
     "use strict";
     
-    let version = '0.0.4'
-        ,lastUpdateDate = '12.08.2017';         
+    let version = '0.0.5'
+        ,lastUpdateDate = '21.08.2017';         
     var isDebug = true                          //Flag debug mode
         ,syntax = {}                            //Stores downloaded syntaxes
         ,htmldata = 'data-colorCode'            //Attribute to find the syntax for highlighting
@@ -137,10 +137,39 @@
                 }
             });
         };
+        _addStyle(jsonObject);
     }
-        
+    
+    /*
+        Object: ColorCode, add CSS styles
+        In: JSON jsonObject - file JSON
+    */
+    function _addStyle(jsonObject){
+        var style = document.createElement("style");
+        style.type = 'text/css';
+        let jsonKey = Object.keys(jsonObject)
+            ,name = jsonKey[0];        
+        for(var i = 0; i < jsonObject[jsonKey].length; i++){
+            var bold = "";
+            Object.keys(jsonObject[jsonKey][i]).map(function(objectKey, index) {
+                var value = jsonObject[jsonKey][i][objectKey];
+                if(objectKey=="color"){
+                    style.innerText = style.innerText + "." + name + "-" + value.substring(1) + "{color:" + value;
+                }
+                if(objectKey=="bold"){
+                    bold = ";font-weight:"+value;
+                }
+            });
+            if(style.innerText!=''){
+                style.innerText = style.innerText + bold + "}";                
+            }
+        style.appendChild(document.createTextNode(""));
+        }
+        document.head.appendChild(style);
+    }
+
     /* 
-        Oblect: _CodeBlock, creates a text block with text and highlighting
+        Object: _CodeBlock, creates a text block with text and highlighting
         in: txt - текст для поиска и замены        
         in: syntax - синтаксис текста
         return: txt - итоговый текст обернутый
@@ -149,7 +178,7 @@
         if(typeof syntax != "object") {return "";}
         txt = _clearHtml(txt);
         for(var i = 0; i < syntax.codeBase.length; i++){            
-            let tag = "";
+            let tag = "";            
             if(syntax.codeBase[i].type=="word"){
                 tag = "\\b(" + syntax.codeBase[i].tag + ")\\b";
             }else {
@@ -162,9 +191,9 @@
             
             var pretxt = "";
             if (isUpperCase) {                       
-                txt = txt.replace(regexp,"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>$1"+tag.toUpperCase()+"</span>");
+                txt = txt.replace(regexp,'<span class='+syntax.name + '-'+syntax.codeBase[i].color.substring(1)+'>'+tag.toUpperCase()+'</span>');
             }else{
-                txt = txt.replace(regexp,"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>$1</span>");                
+                txt = txt.replace(regexp,'<span class='+syntax.name + '-'+syntax.codeBase[i].color.substring(1)+'>$1</span>');               
             }
         }
         
