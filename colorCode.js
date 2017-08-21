@@ -1,11 +1,12 @@
-;(function(){    
+;(function (){    
     "use strict";
     
-    let version = '0.0.3'
+    let version = '0.0.4'
         ,lastUpdateDate = '12.08.2017';         
     var isDebug = true                          //Flag debug mode
         ,syntax = {}                            //Stores downloaded syntaxes
         ,htmldata = 'data-colorCode'            //Attribute to find the syntax for highlighting
+        ,isUpperCase = false                    //Global, attribute to bring everything to the upper case or not
     ;
         
     /*  
@@ -29,7 +30,14 @@
     function getVersion(){
         return version;
     }
-        
+    
+    /*  
+        Object: ColorCode, Sets the value for the uppercase attribute
+        In: Boolean isUpper - flag uppercase
+    */
+    function setUpperCase(isUpper){
+        isUpperCase = !!isUpper;
+    }
     /*
         Object: ColorCode, Return last change date
         return: String - current last change date
@@ -78,10 +86,11 @@
         In: Int bold - value property ccs "font-weight"
         In: String color - value property ccs "color"
     */
-    function _Code(tag, bold, color){
+    function _Code(tag, bold, color, type){
             this.tag = tag;
             this.bold = bold;
             this.color = color;
+            this.type = type;
     }
         
     /*
@@ -92,8 +101,8 @@
         this.name = name;
         this.codeBase = [];
     }
-    _Syntax.prototype.add = function(tag, bold, color){
-        this.codeBase.push(new _Code(tag, bold, color));
+    _Syntax.prototype.add = function(tag, bold, color, type){
+        this.codeBase.push(new _Code(tag, bold, color, type||"word"));
     }
     
     /*
@@ -104,7 +113,8 @@
         var jsonObject = _load(path);
         let jsonKey = Object.keys(jsonObject);
          var bold = ""
-            ,color = "";
+            ,color = ""
+            ,type = "";
         syntax[jsonKey] = new _Syntax(jsonKey[0]);
         for(var i = 0; i < jsonObject[jsonKey].length; i++){
             Object.keys(jsonObject[jsonKey][i]).map(function(objectKey, index) {
@@ -116,11 +126,13 @@
                 if(objectKey=="color"){
                     color = value;
                 }
-                
+                if(objectKey=="type"){
+                    type = value;
+                }                
                 if(typeof value =="object"){
                      Object.keys(value).map(function(tagKey, indexTag) {
                          var value = jsonObject[jsonKey][i][objectKey][tagKey];
-                         syntax[jsonKey].add(value.name, bold, color);
+                         syntax[jsonKey].add(value.name, bold, color, type);
                      });
                 }
             });
@@ -134,15 +146,29 @@
         return: txt - итоговый текст обернутый
     */
     function _CodeBlock(txt, syntax){
-        if(typeof syntax != "object") {return 0;}
+        if(typeof syntax != "object") {return "";}
         txt = _clearHtml(txt);
-        for(var i = 0; i < syntax.codeBase.length; i++){
-            txt = txt + ' ';
-            txt = txt.replace(new RegExp(syntax.codeBase[i].tag+'[ \n]+','g'),"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>" + syntax.codeBase[i].tag + " </span>")
-                
-            ;            
+        for(var i = 0; i < syntax.codeBase.length; i++){            
+            let tag = "";
+            if(syntax.codeBase[i].type=="word"){
+                tag = "\\b(" + syntax.codeBase[i].tag + ")\\b";
+            }else {
+                if(syntax.codeBase[i].type=="regexp"){
+                    tag = syntax.codeBase[i].tag;
+                }
+            }
+            if(tag==""){return "";}
+            let regexp = new RegExp(tag, "gim");
+            
+            var pretxt = "";
+            if (isUpperCase) {                       
+                txt = txt.replace(regexp,"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>$1"+tag.toUpperCase()+"</span>");
+            }else{
+                txt = txt.replace(regexp,"<span style='color:"+syntax.codeBase[i].color+"; font-weight:"+syntax.codeBase[i].bold+"'>$1</span>");                
+            }
         }
-        return txt.substring(0, txt.length - 1);
+        
+        return txt;
     }
         
     /* 
@@ -176,7 +202,7 @@
         if(txt==""){return 0;}
         let targetElement = document.querySelector(selectorTarget);
         if(targetElement==null){
-            sourceElement.insertAdjacentHTML("afterEnd", '<pre class="colorCode" id="colorCode">' + txt +'</pre>');
+            sourceElement.insertAdjacentHTML("afterEnd", '<pre class="colorCode" id="colorCode"><code>' + txt +'</code></pre>');
         }else{            
             targetElement.innerHTML = txt;   
             targetElement.className = "colorCode";
@@ -186,16 +212,17 @@
             sourceElement.remove();
         }
     }
-    
+        
     /*
         Object: ColorCode, sets the listener for updates when the focus is lost
         In: String selectorSource - css selector to element with text
         In: String selectorTarget - css selector to element to insert text
     */
     function addListener(sourceElementId, targetElementId){
-        let sourceElement = document.querySelector(sourceElementId);              
-                sourceElement.addEventListener("blur", function(){
-                    init(sourceElementId, targetElementId, false)
+        let sourceElement = document.querySelector(sourceElementId);
+        let action = "input";
+                sourceElement.addEventListener(action, function(obj){                    
+                    init(sourceElementId, targetElementId, false)    
                 }, true);
     }
     
@@ -207,7 +234,8 @@
     ColorCode.addSyntax = addSyntax;
     ColorCode.init = init;
     ColorCode.addListener = addListener;
-    
+    ColorCode.setUpperCase = setUpperCase;
+
     /*
         "Export" the ColorCode to the outside of the module
     */

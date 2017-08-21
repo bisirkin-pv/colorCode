@@ -9,7 +9,8 @@
         window.onload = function () {
             var colorCodeSql = ColorCode;
             let h1Element = document.querySelector("h1");
-            h1Element.innerHTML = h1Element.innerHTML + " v" + colorCodeSql.getVersion() + "(" + colorCodeSql.getLastUpdateDate() + ")"          
+            h1Element.innerHTML = h1Element.innerHTML + " v" + colorCodeSql.getVersion() + "(" + colorCodeSql.getLastUpdateDate() + ")"
+            colorCodeSql.setUpperCase(false);
             colorCodeSql.addSyntax('style/sql.json');
             colorCodeSql.init("#text_sql", "#text_sql" ,false);
             colorCodeSql.init("#text_sql_input", "#target" ,false);
@@ -38,12 +39,13 @@
     <div>
         <h1>Using code highlighting</h1>
         <h2>Update the illuminated unit from textarea</h2>
-<textarea name="text-input-sql" id="text_sql_input" cols="30" rows="10" data-colorCode="sql">select * from base.dbo.table where table.a = 10 and table.b='text'</textarea>
+<textarea name="text-input-sql" id="text_sql_input" cols="30" rows="10" data-colorCode="sql">select * from base.dbo.table where table.a = 10 and table.b='text' select </textarea>
         
         <pre id="target"></pre>
 
         <h2>Change the backlight within the specified block div</h2>
         <div id="text_sql" data-colorCode="sql">select * from base.dbo.table where table.a = 10 and table.b='text'</div>
+
     </div>
 </body>
 </html>
