@@ -1,6 +1,9 @@
 # **colorCode** - Backlighting User Data
 ## Change log
 
+### v.0.0.6 (05.11.2017)
+* Fixed bug in displaying tags in uppercase.
+
 ### v.0.0.5 (21.08.2017)
 * Added creating CSS styles according to the specified style.
 
