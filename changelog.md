@@ -8,7 +8,7 @@
 * Added a parameter to the json file "type", which defines the processing of the "tag" parameters.
 
 ### v.0.0.3 (12.08.2017)
-* Changed the default HTML tag for the output element with backlighting - from **&#8249;div&#8250;div** to **&#8249;pre&#8250;**;
+* Changed the default HTML tag for the output element with backlighting - from **&#8249;div&#8250;** to **&#8249;pre&#8250;**;
 * The substitution of symbols &#8249;,&#8250; for the corresponding NTML codes.
 
 ### v.0.0.2 (10.08.2017)
