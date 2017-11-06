@@ -1,6 +1,9 @@
 # **colorCode** - Backlighting User Data
 ## Change log
 
+### v.0.0.7 (06.11.2017)
+* Added processing of a new type (str) in the json file.
+
 ### v.0.0.6 (05.11.2017)
 * Fixed bug in displaying tags in uppercase.
 
