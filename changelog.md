@@ -1,6 +1,10 @@
 # **colorCode** - Backlighting User Data
 ## Change log
 
+### v.0.0.8 (07.11.2017)
+* Added processing of a new type (regexp) in the json file.
+* Added processing of single-line comments sql
+
 ### v.0.0.7 (06.11.2017)
 * Added processing of a new type (str) in the json file.
 
